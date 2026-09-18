@@ -11,15 +11,24 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-`.env.local`：
+## 自備金鑰（BYOK）
 
-| 變數 | 必填 | 說明 |
-| --- | --- | --- |
-| `OpenCode_GO_KEY` | 是 | OpenCode Go API 金鑰（只在伺服器端使用） |
-| `OPENCODE_GO_MODEL` | 否 | 預設 `deepseek-v4.1-flash`（約 30–60 秒）。`kimi-k3` 品質相近但約 4 分鐘 |
-| `OPENCODE_GO_BASE_URL` | 否 | 預設 `https://opencode.ai/zen/go/v1` |
+本服務**不持有、也不需要**任何 OpenCode 金鑰，不再讀取 `OpenCode_GO_KEY` 環境變數。
+
+- 使用者在網站右上角「API 金鑰」貼上自己的 OpenCode Go 金鑰，存在**瀏覽器的 localStorage**。
+- 每次呼叫 API 時以 `Authorization: Bearer <key>` 帶上；伺服器只在該次請求中轉發給 OpenCode Go，不儲存、不記錄。
+- 沒帶金鑰的請求一律回 `401`（`code: "missing_api_key"`）；OpenCode 拒絕金鑰時回 `401`（`code: "invalid_api_key"`）。
+
+選用的環境變數（`.env.local`，皆非機密）：
+
+| 變數 | 說明 |
+| --- | --- |
+| `OPENCODE_GO_MODEL` | 預設 `deepseek-v4.1-flash`（約 30–60 秒）。`kimi-k3` 品質相近但約 4 分鐘 |
+| `OPENCODE_GO_BASE_URL` | 預設 `https://opencode.ai/zen/go/v1` |
 
 ## API：`POST /api/recommendation`
+
+標頭：`Authorization: Bearer <你的 OpenCode 金鑰>`（必填）
 
 `multipart/form-data`：
 
@@ -30,6 +39,8 @@ npm run dev        # http://localhost:3000
 - `<key>` ∈ `autobiography | profile | studyPlan | transcript | extras`
 
 回傳 JSON（型別見 `lib/types.ts` 的 `RecommendationResult`）。加上 `?stream=1` 則回傳 NDJSON 串流，事件為 `progress`／`result`／`error`，前端用此顯示進度。
+
+另有 `POST /api/key/verify`：以同樣的標頭驗證金鑰是否有效（會送出一則極短的測試訊息，花費可忽略）。
 
 ## 資料來源與限制
 

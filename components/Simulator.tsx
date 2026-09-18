@@ -5,6 +5,8 @@ import { DOC_KEYS, DOC_LABELS, type DocKey, type ProgressEvent, type Recommendat
 import ProgramPicker from "./ProgramPicker";
 import ResultView from "./ResultView";
 import UploadCard from "./UploadCard";
+import { useApiKey } from "./settings/ApiKeyProvider";
+import { maskKey } from "@/lib/api-key-store";
 
 const DOC_HINTS: Record<DocKey, string> = {
   autobiography: "各校多限 1–2 頁（清大限中文 1 頁）。",
@@ -19,6 +21,8 @@ type Status = "idle" | "running" | "done" | "error";
 const emptyRecord = <T,>(v: () => T) => Object.fromEntries(DOC_KEYS.map((k) => [k, v()])) as Record<DocKey, T>;
 
 export default function Simulator() {
+  // BYOK：金鑰存在使用者自己的瀏覽器（localStorage），送出審查時才隨請求帶上
+  const { apiKey, ready, openSettings } = useApiKey();
   const [selected, setSelected] = useState<string[]>([]);
   const [files, setFiles] = useState<Record<DocKey, File[]>>(() => emptyRecord(() => []));
   const [texts, setTexts] = useState<Record<DocKey, string>>(() => emptyRecord(() => ""));
@@ -33,7 +37,7 @@ export default function Simulator() {
 
   const running = status === "running";
   const hasInput = DOC_KEYS.some((k) => files[k].length > 0 || texts[k].trim().length > 0);
-  const canSubmit = !running && selected.length > 0 && hasInput;
+  const canSubmit = !running && selected.length > 0 && hasInput && Boolean(apiKey);
 
   useEffect(() => {
     if (!running) return;
@@ -47,6 +51,11 @@ export default function Simulator() {
   }, [status]);
 
   async function submit() {
+    // 保險：按鈕在沒金鑰時本來就是停用的，這裡再擋一次並直接引導使用者去設定
+    if (!apiKey) {
+      openSettings("請先設定你的 OpenCode API 金鑰，才能開始審查。");
+      return;
+    }
     const fd = new FormData();
     selected.forEach((id) => fd.append("programs", id));
     for (const k of DOC_KEYS) {
@@ -65,9 +74,16 @@ export default function Simulator() {
 
     let finished = false;
     try {
-      const res = await fetch("/api/recommendation?stream=1", { method: "POST", body: fd, signal: ctrl.signal });
+      const res = await fetch("/api/recommendation?stream=1", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: fd,
+        signal: ctrl.signal,
+      });
       if (!res.ok || !res.body) {
         const j = await res.json().catch(() => null);
+        // 401 = 沒帶金鑰或金鑰無效：直接重開設定視窗，讓使用者修正後再送出
+        if (res.status === 401) openSettings(j?.error ?? "API 金鑰無效或未設定。");
         throw new Error(j?.error ?? `伺服器回應錯誤（HTTP ${res.status}）`);
       }
       const reader = res.body.getReader();
@@ -75,7 +91,11 @@ export default function Simulator() {
       let buf = "";
       const handle = (e: ProgressEvent) => {
         if (e.type === "progress") setProgress(e.message);
-        else if (e.type === "error") throw new Error(e.message);
+        else if (e.type === "error") {
+          // 串流中途才被上游拒絕金鑰時，錯誤事件會帶 code
+          if (e.code) openSettings(e.message);
+          throw new Error(e.message);
+        }
         else {
           finished = true;
           setResult(e.data);
@@ -108,6 +128,40 @@ export default function Simulator() {
 
   return (
     <div className="space-y-10">
+      {/* 金鑰狀態列：BYOK 的第一步。尚未 hydrate 時只佔位，避免「未設定」一閃而過 */}
+      {!ready ? (
+        <div aria-hidden className="h-[84px]" />
+      ) : apiKey ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3.5">
+          <p className="flex items-center gap-2.5 text-sm">
+            <span aria-hidden className="h-2 w-2 rounded-full bg-good" />
+            已設定 OpenCode API 金鑰
+            <code className="rounded bg-background px-1.5 py-0.5 font-mono text-xs text-muted">{maskKey(apiKey)}</code>
+          </p>
+          <button
+            type="button"
+            onClick={() => openSettings()}
+            className="text-sm text-accent underline-offset-2 hover:underline"
+          >
+            變更或清除
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-amber-400/60 bg-amber-500/10 px-4 py-4">
+          <div className="min-w-0 text-sm">
+            <p className="font-semibold text-amber-800 dark:text-amber-200">尚未設定 OpenCode API 金鑰</p>
+            <p className="mt-0.5 text-muted">本服務採自備金鑰（BYOK），審查會使用你自己的 OpenCode Go 額度。</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => openSettings()}
+            className="shrink-0 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 dark:text-black"
+          >
+            設定金鑰
+          </button>
+        </div>
+      )}
+
       <section aria-labelledby="s1">
         <h2 id="s1" className="mb-4 flex items-baseline gap-3 font-serif text-2xl font-black">
           <span className="font-mono text-sm font-medium text-accent">01</span>
@@ -179,7 +233,11 @@ export default function Simulator() {
           )}
           {!running && !canSubmit && (
             <span className="text-sm text-muted">
-              {selected.length === 0 ? "請先選擇校系" : "請至少上傳或貼上一項資料"}
+              {selected.length === 0
+                ? "請先選擇校系"
+                : !hasInput
+                  ? "請至少上傳或貼上一項資料"
+                  : "請先設定 API 金鑰"}
             </span>
           )}
         </div>

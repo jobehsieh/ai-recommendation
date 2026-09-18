@@ -97,8 +97,15 @@ export default function Hero({ programCount, schoolCount }: { programCount: numb
             </Link>
           </div>
 
+          <p
+            className="rise mt-5 max-w-xl text-sm leading-relaxed text-muted"
+            style={{ "--d": "0.28s" } as React.CSSProperties}
+          >
+            自備金鑰（BYOK）：使用你自己的 OpenCode Go API 金鑰，金鑰只存在你的瀏覽器。
+          </p>
+
           <dl
-            className="rise mt-12 flex flex-wrap gap-x-10 gap-y-4 border-t border-border pt-6"
+            className="rise mt-10 flex flex-wrap gap-x-10 gap-y-4 border-t border-border pt-6"
             style={{ "--d": "0.32s" } as React.CSSProperties}
           >
             {[

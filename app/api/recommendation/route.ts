@@ -1,7 +1,11 @@
 /**
  * POST /api/recommendation —— 推甄審查模擬器的後端入口。
  *
+ * 【BYOK】本服務不持有任何 OpenCode 金鑰。呼叫端必須以 `Authorization: Bearer <key>` 帶上
+ * 「自己的」金鑰；伺服器只在這次請求中轉發給 OpenCode Go，不儲存、不記錄，也不會退回讀取環境變數。
+ *
  * 整體流程（由上到下）：
+ *   0. 讀取並檢查金鑰（沒帶就 401，連表單都不解析）
  *   1. 讀取 multipart/form-data（校系 id、各類上傳檔案／貼上文字、補充說明）
  *   2. 快速驗證（校系數量、是否至少有一項資料）── 這些檢查很便宜，且要在開始串流「之前」做完，
  *      這樣才能回傳正確的 HTTP 400；一旦開始串流，狀態碼就已經送出（200）無法再改。
@@ -19,6 +23,8 @@
  *   其中 <key> ∈ autobiography | profile | studyPlan | transcript | extras
  */
 import { PROGRAMS } from "@/data/programs";
+import { MISSING_KEY_MESSAGE, readApiKey } from "@/lib/api-key";
+import { OpenCodeError } from "@/lib/opencode";
 import { clip, parseUpload, MAX_CHARS_PER_DOC } from "@/lib/parse-files";
 import type { DocInput } from "@/lib/prompt";
 import { runRecommendation } from "@/lib/recommend";
@@ -162,6 +168,13 @@ export async function POST(request: Request) {
   // 1) 決定回傳模式：網址帶 ?stream=1 → 串流（前端用），否則 → 一次回傳完整 JSON
   const stream = new URL(request.url).searchParams.get("stream") === "1";
 
+  // 0) BYOK：金鑰由使用者自備，從 Authorization 標頭讀取；沒帶或格式不合就直接回 401。
+  //    這一步放在最前面：未授權的請求不必花力氣解析（可能很大的）上傳內容。
+  //    刻意「不」退回讀環境變數：本服務不持有任何金鑰，因此也不會替匿名訪客花費任何人的額度。
+  //    code 讓前端知道要引導使用者去設定金鑰，而不是顯示一般錯誤。
+  const apiKey = readApiKey(request);
+  if (!apiKey) return json({ error: MISSING_KEY_MESSAGE, code: "missing_api_key" }, 401);
+
   // 2) 解析 multipart/form-data。若 Content-Type 不對或內容毀損，formData() 會丟例外，
   //    這是「呼叫方式錯誤」，回 400 而不是 500。
   let form: FormData;
@@ -218,6 +231,7 @@ export async function POST(request: Request) {
     return runRecommendation(
       { programIds, docs, notes, warnings },
       {
+        apiKey,
         signal,
         onProgress: (message, chars) => emit({ type: "progress", stage: "analyzing", message, chars }),
       },
@@ -228,14 +242,18 @@ export async function POST(request: Request) {
   //    只有 Error 才取 message；其他型別（字串、物件…）一律顯示「未知錯誤」，避免洩漏內部細節。
   const errMessage = (e: unknown) => (e instanceof Error ? e.message : "未知錯誤");
 
+  // 上游（OpenCode Go）拒絕金鑰時，錯誤會帶 code = "invalid_api_key"，前端據此重新開啟金鑰設定
+  const errCode = (e: unknown) => (e instanceof OpenCodeError ? e.code : undefined);
+
   // 8) 非串流模式：等 work 全部完成，一次回傳 JSON。
-  //    work 內任何失敗（檔案全部無法解析、AI 呼叫失敗、逾時、格式無法解析…）
-  //    目前一律以 502 回應，代表「後端處理／上游服務出問題」，這是刻意的簡化處理。
+  //    金鑰被上游拒絕 → 401（並帶 code）；work 內其他失敗（檔案全部無法解析、AI 呼叫失敗、
+  //    逾時、格式無法解析…）目前一律以 502 回應，代表「後端處理／上游服務出問題」，這是刻意的簡化處理。
   if (!stream) {
     try {
       return json(await work(() => {}));
     } catch (e) {
-      return json({ error: errMessage(e) }, 502);
+      const code = errCode(e);
+      return json({ error: errMessage(e), code }, code ? 401 : 502);
     }
   }
 
@@ -266,7 +284,7 @@ export async function POST(request: Request) {
         emit({ type: "result", data: await work(emit) });
       } catch (e) {
         // 失敗：以 error 事件告知前端（前端讀到後會顯示錯誤訊息）
-        emit({ type: "error", message: errMessage(e) });
+        emit({ type: "error", message: errMessage(e), code: errCode(e) });
       } finally {
         // 不論成功或失敗都要關閉串流，前端才知道「已經結束」。
         // 若串流已被關閉（用戶端斷線），close() 會丟例外，同樣吞掉。

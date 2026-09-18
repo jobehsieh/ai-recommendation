@@ -126,7 +126,7 @@ function postProcess(out: ModelOutput, input: RecommendationInput): Recommendati
 
 export async function runRecommendation(
   input: RecommendationInput,
-  opts: { signal?: AbortSignal; onProgress?: (message: string, chars: number) => void },
+  opts: { apiKey: string; signal?: AbortSignal; onProgress?: (message: string, chars: number) => void },
 ): Promise<RecommendationResult> {
   const sessionId = randomUUID();
   const messages: ChatMessage[] = buildMessages(input.programIds, input.docs, input.notes);
@@ -135,6 +135,7 @@ export async function runRecommendation(
 
   const call = (msgs: ChatMessage[]) =>
     chatStream(msgs, {
+      apiKey: opts.apiKey,
       sessionId,
       signal: opts.signal,
       onStats: (s) => {

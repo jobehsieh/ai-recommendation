@@ -40,6 +40,8 @@ export default function Transparency() {
           <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">
             你上傳的內容只在單次分析中處理，本服務不寫入資料庫、也不留存。分析時，文件內容會被送至第三方 AI 模型服務進行處理，
             該服務如何保存資料由其自身政策決定。請避免上傳身分證字號、住址等與審查無關的個資。
+            你的 OpenCode API 金鑰只存在你自己瀏覽器的 localStorage；每次分析時隨請求送到本站伺服器並轉發給 OpenCode Go，
+            本服務不會儲存或記錄它，也不提供任何內建金鑰。
           </p>
         </div>
       </div>

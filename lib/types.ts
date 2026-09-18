@@ -40,7 +40,7 @@ export interface Program {
 export type ProgressEvent =
   | { type: "progress"; stage: "parsing" | "analyzing"; message: string; chars?: number }
   | { type: "result"; data: RecommendationResult }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string; code?: "missing_api_key" | "invalid_api_key" };
 
 export interface ProgramAssessment {
   programId: string;

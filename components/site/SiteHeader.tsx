@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ApiKeyButton from "@/components/settings/ApiKeyButton";
 import Logo from "./Logo";
 
 export const NAV = [
@@ -28,6 +29,10 @@ export default function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {/* 用外層容器控制顯示：按鈕自己的 inline-flex 會蓋掉同層的 hidden，造成手機版也出現 */}
+          <div className="hidden md:block">
+            <ApiKeyButton />
+          </div>
           <Link href="/simulator" className={CTA_CLASS}>
             開始模擬
           </Link>
@@ -42,12 +47,13 @@ export default function SiteHeader() {
                 ≡
               </span>
             </summary>
-            <div className="absolute right-0 mt-2 w-44 rounded-lg border border-border bg-surface p-1.5 shadow-lg">
+            <div className="absolute right-0 mt-2 w-48 rounded-lg border border-border bg-surface p-1.5 shadow-lg">
               {NAV.map((n) => (
                 <Link key={n.href} href={n.href} className="block rounded-md px-3 py-2 text-sm hover:bg-surface-2">
                   {n.label}
                 </Link>
               ))}
+              <ApiKeyButton className="mt-1 w-full border-0 border-t border-border" />
             </div>
           </details>
         </div>
