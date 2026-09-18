@@ -1,26 +1,137 @@
 @import "tailwindcss";
 
+/*
+ * 設計語彙「朱批」：紙張暖白 + 墨色文字 + 朱紅印章／批註。
+ * 淺色為紙、深色為墨板；所有元件只使用下面的語意色票，不直接寫死色碼。
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f3eee4;
+  --foreground: #17212b;
+  --surface: #fbf8f1;
+  --surface-2: #ece5d6;
+  --muted: #666052;
+  --border: #d8cfbc;
+  --accent: #c4301c; /* 朱紅 */
+  --accent-soft: rgb(196 48 28 / 0.1);
+  --good: #2f6b4f;
+  --inverse-bg: #16202b;
+  --inverse-fg: #f3eee4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #12161b;
+    --foreground: #ece5d6;
+    --surface: #1a2027;
+    --surface-2: #222a33;
+    --muted: #a29c8e;
+    --border: #2f3843;
+    --accent: #ee6a4f;
+    --accent-soft: rgb(238 106 79 / 0.14);
+    --good: #6fc09a;
+    --inverse-bg: #ece5d6;
+    --inverse-fg: #12161b;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-inverse-bg: var(--inverse-bg);
+  --color-inverse-fg: var(--inverse-fg);
+  --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Noto Serif TC", "Songti TC", "PMingLiU", "Source Han Serif TC", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 標題斷行均衡，避免手機上出現單字孤行 */
+h1,
+h2 {
+  text-wrap: balance;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--background);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── 批註語彙 ───────────────────────────────────────── */
+
+/* 朱筆波浪底線：標出有問題的句子 */
+.squiggle {
+  text-decoration: underline wavy var(--accent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 5px;
+}
+
+/* 螢光筆：標出做得好的句子 */
+.hl-good {
+  background: linear-gradient(transparent 52%, color-mix(in srgb, var(--good) 30%, transparent) 52%);
+  color: inherit;
+}
+
+/* 印章：雙線框、略微傾斜，蓋下時有一次彈跳 */
+.stamp {
+  border: 3px double var(--accent);
+  color: var(--accent);
+  transform: rotate(-9deg);
+  animation: stamp-in 0.55s 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+/* 背景方格紙，向外淡出 */
+.paper-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 34px 34px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 30% 25%, #000 25%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 30% 25%, #000 25%, transparent 75%);
+  opacity: 0.55;
+}
+
+/* ── 動態 ───────────────────────────────────────────── */
+
+.rise {
+  animation: rise 0.75s var(--d, 0s) cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(-9deg) scale(1.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .stamp {
+    animation: none;
+  }
 }

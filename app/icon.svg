@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="4" y="4" width="56" height="56" rx="8" fill="#c4301c"/>
+  <rect x="9" y="9" width="46" height="46" rx="4" fill="none" stroke="#f3eee4" stroke-opacity="0.55" stroke-width="2"/>
+  <text x="32" y="46" text-anchor="middle" font-family="'Noto Serif TC','Songti TC','PMingLiU',serif" font-size="36" font-weight="900" fill="#f3eee4">審</text>
+</svg>
