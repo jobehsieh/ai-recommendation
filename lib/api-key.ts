@@ -1,8 +1,8 @@
 /**
  * BYOK（自備金鑰）的伺服器端輔助函式。
  *
- * 本服務不持有任何 OpenCode 金鑰：金鑰由使用者存在自己的瀏覽器，
- * 每次呼叫 API 時以 `Authorization: Bearer <key>` 帶上，伺服器只在該次請求中轉發給 OpenCode Go，
+ * 本服務不持有任何 Gemini 金鑰：金鑰由使用者存在自己的瀏覽器，
+ * 每次呼叫 API 時以 `Authorization: Bearer <key>` 帶上，伺服器只在該次請求中轉發給 Google Gemini，
  * 不寫入資料庫、不寫入日誌，也不會退回讀取環境變數。
  */
 
@@ -23,4 +23,4 @@ export function redactKey(text: string, key: string): string {
   return key ? text.split(key).join("***") : text;
 }
 
-export const MISSING_KEY_MESSAGE = "尚未設定 OpenCode API 金鑰，請先到「API 金鑰」設定中輸入你自己的金鑰。";
+export const MISSING_KEY_MESSAGE = "尚未設定 Gemini API 金鑰，請先到「API 金鑰」設定中輸入你自己的金鑰。";

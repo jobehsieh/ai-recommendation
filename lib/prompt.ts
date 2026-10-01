@@ -1,7 +1,7 @@
 import { formatProgramForPrompt, getProgram } from "@/data/programs";
 import { HISTORICAL_CRITERIA } from "@/data/historical-criteria";
 import { DOC_KEYS, DOC_LABELS, type DocKey } from "./types";
-import type { ChatMessage } from "./opencode";
+import type { ChatMessage } from "./gemini";
 
 export interface DocInput {
   /** 使用者是否提供了此類資料 */

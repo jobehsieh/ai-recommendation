@@ -1,6 +1,5 @@
-import { randomUUID } from "node:crypto";
 import { getProgram } from "@/data/programs";
-import { chatStream, MODEL, type ChatMessage } from "./opencode";
+import { chatStream, MODEL, type ChatMessage } from "./gemini";
 import { buildMessages, type DocInput } from "./prompt";
 import { ModelOutputSchema, extractJson, type ModelOutput } from "./schema";
 import {
@@ -128,7 +127,6 @@ export async function runRecommendation(
   input: RecommendationInput,
   opts: { apiKey: string; signal?: AbortSignal; onProgress?: (message: string, chars: number) => void },
 ): Promise<RecommendationResult> {
-  const sessionId = randomUUID();
   const messages: ChatMessage[] = buildMessages(input.programIds, input.docs, input.notes);
   const startedAt = Date.now();
   let lastEmit = 0;
@@ -136,7 +134,6 @@ export async function runRecommendation(
   const call = (msgs: ChatMessage[]) =>
     chatStream(msgs, {
       apiKey: opts.apiKey,
-      sessionId,
       signal: opts.signal,
       onStats: (s) => {
         const now = Date.now();

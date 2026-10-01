@@ -61,7 +61,7 @@ export default function SettingsDialog() {
       if (res.ok) return persist(trimmed);
       const body = await res.json().catch(() => null);
       if (res.status === 401) {
-        // 金鑰確定被 OpenCode 拒絕：不儲存，讓使用者修正
+        // 金鑰確定被 Gemini 拒絕：不儲存，讓使用者修正
         setPhase({ kind: "error", message: body?.error ?? "金鑰無效。", canForce: false });
       } else {
         // 網路或上游暫時故障，與金鑰本身無關：允許使用者略過驗證直接儲存
@@ -89,7 +89,7 @@ export default function SettingsDialog() {
           <div>
             <p className="font-mono text-[11px] tracking-[0.22em] text-accent">設定</p>
             <h2 id="key-dialog-title" className="mt-1 font-serif text-2xl font-black">
-              OpenCode API 金鑰
+              Gemini API 金鑰
             </h2>
           </div>
           <button
@@ -110,14 +110,14 @@ export default function SettingsDialog() {
 
         <p className="mt-4 text-sm leading-7 text-muted">
           本服務採<strong className="font-semibold text-foreground">自備金鑰（BYOK）</strong>
-          ：審查使用的是你自己的 OpenCode Go 額度，我們不提供也不保管金鑰。還沒有的話，可以到{" "}
+          ：審查使用的是你自己的 Google Gemini 額度，我們不提供也不保管金鑰。還沒有的話，可以到{" "}
           <a
-            href="https://opencode.ai/docs/go/"
+            href="https://aistudio.google.com/apikey"
             target="_blank"
             rel="noreferrer"
             className="text-accent underline underline-offset-2"
           >
-            OpenCode Go
+            Google Gemini
           </a>{" "}
           取得。
         </p>
@@ -215,7 +215,7 @@ export default function SettingsDialog() {
 
         <ul className="mt-6 space-y-1.5 border-t border-border pt-5 text-xs leading-relaxed text-muted">
           <li>· 金鑰只存在<strong className="font-medium text-foreground">這個瀏覽器的 localStorage</strong>，不會存到我們的伺服器。</li>
-          <li>· 每次分析時，金鑰會隨請求送到本站伺服器並轉發給 OpenCode Go，我們不會儲存或記錄它。</li>
+          <li>· 每次分析時，金鑰會隨請求送到本站伺服器並轉發給 Google Gemini，我們不會儲存或記錄它。</li>
           <li>· 共用電腦請用完後按「清除金鑰」；同一個瀏覽器上的其他網站腳本無法讀取，但瀏覽器擴充功能可能可以。</li>
           <li>· 「驗證」會用你的額度發出一則極短的測試訊息，花費可忽略。</li>
         </ul>

@@ -53,7 +53,7 @@ export default function Simulator() {
   async function submit() {
     // 保險：按鈕在沒金鑰時本來就是停用的，這裡再擋一次並直接引導使用者去設定
     if (!apiKey) {
-      openSettings("請先設定你的 OpenCode API 金鑰，才能開始審查。");
+      openSettings("請先設定你的 Gemini API 金鑰，才能開始審查。");
       return;
     }
     const fd = new FormData();
@@ -135,7 +135,7 @@ export default function Simulator() {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3.5">
           <p className="flex items-center gap-2.5 text-sm">
             <span aria-hidden className="h-2 w-2 rounded-full bg-good" />
-            已設定 OpenCode API 金鑰
+            已設定 Gemini API 金鑰
             <code className="rounded bg-background px-1.5 py-0.5 font-mono text-xs text-muted">{maskKey(apiKey)}</code>
           </p>
           <button
@@ -149,8 +149,8 @@ export default function Simulator() {
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-amber-400/60 bg-amber-500/10 px-4 py-4">
           <div className="min-w-0 text-sm">
-            <p className="font-semibold text-amber-800 dark:text-amber-200">尚未設定 OpenCode API 金鑰</p>
-            <p className="mt-0.5 text-muted">本服務採自備金鑰（BYOK），審查會使用你自己的 OpenCode Go 額度。</p>
+            <p className="font-semibold text-amber-800 dark:text-amber-200">尚未設定 Gemini API 金鑰</p>
+            <p className="mt-0.5 text-muted">本服務採自備金鑰（BYOK），審查會使用你自己的 Google Gemini 額度。</p>
           </div>
           <button
             type="button"

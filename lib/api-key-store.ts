@@ -7,7 +7,7 @@
  *   並讓呼叫端知道「沒有成功持久化」以便提示使用者。
  */
 
-const STORAGE_KEY = "ai-recommendation:opencode-api-key";
+const STORAGE_KEY = "ai-recommendation:gemini-api-key";
 
 const listeners = new Set<() => void>();
 let memoryKey: string | null = null;
