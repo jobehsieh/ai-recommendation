@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DOC_KEYS, DOC_LABELS, type DocKey, type ProgressEvent, type RecommendationResult } from "@/lib/types";
+import { MAX_CHARS_PER_DOC } from "@/lib/limits";
+import { clipDoc, parseFileInBrowser } from "@/lib/parse-client";
 import ProgramPicker from "./ProgramPicker";
 import ResultView from "./ResultView";
 import UploadCard from "./UploadCard";
@@ -56,13 +58,6 @@ export default function Simulator() {
       openSettings("請先設定你的 Gemini API 金鑰，才能開始審查。");
       return;
     }
-    const fd = new FormData();
-    selected.forEach((id) => fd.append("programs", id));
-    for (const k of DOC_KEYS) {
-      files[k].forEach((f) => fd.append(`file:${k}`, f));
-      if (texts[k].trim()) fd.append(`text:${k}`, texts[k]);
-    }
-    fd.append("notes", notes);
 
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -70,10 +65,54 @@ export default function Simulator() {
     setError("");
     setResult(null);
     setElapsed(0);
-    setProgress("上傳資料中…");
+    setProgress("正在解析檔案…");
 
     let finished = false;
     try {
+      // 1) 先在使用者的瀏覽器把所有檔案解析成純文字。
+      //    原檔不上傳，可避開部署平台（如 Vercel 約 4.5MB）的請求 body 上限而回 HTTP 413 的問題；
+      //    檔案也不會離開瀏覽器，隱私更好。
+      const docTexts = emptyRecord(() => "");
+      const warnings: string[] = [];
+      for (const k of DOC_KEYS) {
+        const list = files[k];
+        const parts: string[] = [];
+        for (const f of list) {
+          if (ctrl.signal.aborted) {
+            setStatus("idle");
+            return;
+          }
+          setProgress(`解析「${DOC_LABELS[k]}」：${f.name}`);
+          const parsed = await parseFileInBrowser(f);
+          if (parsed.warning) warnings.push(parsed.warning);
+          // 同一類別多個檔案時加上檔名分隔線，讓 AI 分得出內容來自哪一份
+          if (parsed.text) {
+            parts.push(list.length > 1 ? `--- 檔案：${parsed.name} ---\n${parsed.text}` : parsed.text);
+          }
+        }
+        if (texts[k].trim()) parts.push(texts[k].trim());
+        const clipped = clipDoc(parts.join("\n\n"));
+        if (clipped.truncated) {
+          warnings.push(`「${DOC_LABELS[k]}」內容過長，僅取前 ${MAX_CHARS_PER_DOC} 字進行評估。`);
+        }
+        docTexts[k] = clipped.text;
+      }
+
+      // 2) 二次確認：全部檔案都讀不到文字（例如整份都是掃描檔）就不送出，直接提示原因
+      if (!DOC_KEYS.some((k) => docTexts[k].length > 0)) {
+        setError(warnings.join("\n") || "沒有讀到任何可用的文字內容。");
+        setStatus("error");
+        return;
+      }
+
+      // 3) 只送出「解析後的文字」（text:<key>）與警告，不再送原始檔案
+      const fd = new FormData();
+      selected.forEach((id) => fd.append("programs", id));
+      for (const k of DOC_KEYS) if (docTexts[k]) fd.append(`text:${k}`, docTexts[k]);
+      fd.append("notes", notes);
+      if (warnings.length) fd.append("warnings", JSON.stringify(warnings));
+
+      setProgress("上傳資料中…");
       const res = await fetch("/api/recommendation?stream=1", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}` },
@@ -84,7 +123,13 @@ export default function Simulator() {
         const j = await res.json().catch(() => null);
         // 401 = 沒帶金鑰或金鑰無效：直接重開設定視窗，讓使用者修正後再送出
         if (res.status === 401) openSettings(j?.error ?? "API 金鑰無效或未設定。");
-        throw new Error(j?.error ?? `伺服器回應錯誤（HTTP ${res.status}）`);
+        // 413 = 請求內容超過伺服器允許的大小（例如部署平台的 body 上限）。正常情況下前端只送文字，
+        // 不該發生；萬一發生，給明確可行的提示，而不是只丟「HTTP 413」。
+        const fallback =
+          res.status === 413
+            ? "送出的內容超過伺服器允許的大小，請減少資料量後重試（可改用「貼上文字」）。"
+            : `伺服器回應錯誤（HTTP ${res.status}）`;
+        throw new Error(j?.error ?? fallback);
       }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();

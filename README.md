@@ -34,9 +34,14 @@ npm run dev        # http://localhost:3000
 
 - `programs`：校系 id，可重複（見 `data/programs.ts`），1–8 個
 - `file:<key>`：上傳檔案（PDF／DOCX／TXT／MD，單檔 ≤12MB），可多檔
-- `text:<key>`：直接貼上的文字
+- `text:<key>`：直接貼上的文字，或前端解析後的文件文字
+- `warnings`：前端解析時產生的警告（JSON 字串陣列，選填）
 - `notes`：補充說明（選填）
 - `<key>` ∈ `autobiography | profile | studyPlan | transcript | extras`
+
+> 網站介面會在**使用者的瀏覽器**先把檔案解析成文字，只上傳文字（原檔不離開瀏覽器）。
+> 這是為了避開部署平台（如 Vercel 約 4.5MB）的請求大小上限，同時更保護隱私。
+> `file:<key>` 仍保留，方便直接以程式呼叫 API 的使用者。
 
 回傳 JSON（型別見 `lib/types.ts` 的 `RecommendationResult`）。加上 `?stream=1` 則回傳 NDJSON 串流，事件為 `progress`／`result`／`error`，前端用此顯示進度。
 

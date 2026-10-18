@@ -1,8 +1,8 @@
 import { extractText, getDocumentProxy } from "unpdf";
 import mammoth from "mammoth";
+import { MAX_FILE_BYTES, MAX_CHARS_PER_DOC } from "./limits";
 
-export const MAX_FILE_BYTES = 12 * 1024 * 1024;
-export const MAX_CHARS_PER_DOC = 16000;
+export { MAX_FILE_BYTES, MAX_CHARS_PER_DOC };
 
 export interface ParsedFile {
   name: string;

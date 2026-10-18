@@ -17,8 +17,9 @@
  *
  * 表單欄位約定：
  *   programs        校系 id，可重複；或一個 JSON 陣列字串（id 定義見 data/programs.ts）
- *   file:<key>      上傳檔案，可多檔
- *   text:<key>      直接貼上的文字
+ *   file:<key>      上傳檔案，可多檔（前端已改為在瀏覽器解析、只送文字，此欄位保留給直接呼叫 API 的使用者）
+ *   text:<key>      直接貼上的文字，或前端解析後的文件文字
+ *   warnings        前端解析時產生的警告（JSON 字串陣列，選填）
  *   notes           補充說明（選填）
  *   其中 <key> ∈ autobiography | profile | studyPlan | transcript | extras
  */
@@ -103,15 +104,33 @@ function readProgramIds(form: FormData): string[] {
 }
 
 /**
+ * 讀出前端在瀏覽器解析檔案時產生的警告（JSON 字串陣列）。
+ * 前端已改為「先解析成文字再上傳」，解析失敗／掃描檔／內容過長的警告由前端產生並帶上來；
+ * 伺服器只做基本清理（只收字串、限制數量），避免被塞入大量內容。
+ */
+function readClientWarnings(form: FormData): string[] {
+  const raw = form.get("warnings");
+  if (typeof raw !== "string" || !raw.trim()) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr.filter((x): x is string => typeof x === "string").slice(0, 50);
+  } catch {
+    return [];
+  }
+}
+
+/**
  * 解析所有上傳檔案與貼上文字，依「資料類別」彙整成 docs，並收集沿途的警告訊息。
  *
  * @param form    請求的表單資料
  * @param onStep  每開始解析一個檔案就呼叫一次，讓串流模式可以即時回報「正在解析哪個檔案」
  * @returns docs      每個類別（自傳、成績單…）各一筆：是否有提供、合併後的文字、檔名、是否被截斷
- *          warnings  給使用者看的警告（掃描檔、超過大小、格式不支援、內容過長被截斷…）
+ *          warnings  給使用者看的警告（前端帶上來的解析警告、掃描檔、超過大小、格式不支援、內容過長被截斷…）
  */
 async function collectDocs(form: FormData, onStep: (msg: string) => void) {
-  const warnings: string[] = [];
+  // 先放入前端帶上來的警告（前端解析失敗、掃描檔、內容過長…）
+  const warnings: string[] = readClientWarnings(form);
   // 先宣告成空物件再逐一填入；迴圈會走遍所有 DOC_KEYS，所以最後五個類別都一定存在，
   // 下游（提示詞、後處理）可以放心地用 docs[k] 取值而不必檢查 undefined。
   const docs = {} as Record<DocKey, DocInput>;

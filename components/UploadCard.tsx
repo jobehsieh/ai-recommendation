@@ -71,7 +71,7 @@ export default function UploadCard({
         } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
         <span className="text-muted">拖曳檔案到這裡，或點擊選擇</span>
-        <span className="mt-0.5 text-xs text-muted">PDF／Word(.docx)／TXT／MD，單檔 12MB 內</span>
+        <span className="mt-0.5 text-xs text-muted">PDF／Word(.docx)／TXT／MD，單檔 12MB 內；在你的瀏覽器解析後只上傳文字</span>
         <input
           ref={inputRef}
           id={inputId}
