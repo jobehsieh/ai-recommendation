@@ -30,6 +30,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - [x] 階段一：BYOK 模式（自備 Gemini 金鑰，伺服器不持有金鑰）
 - [x] 階段二：AI 推甄審查模擬器（審查 API、工具頁與 landing page）
 - [x] 階段三：AI 服務改為 Google Gemini（OpenAI 相容端點）
+- [x] 修正：正式站大檔上傳回 HTTP 413（前端改為瀏覽器端解析、只上傳文字）
 - [ ] 階段四：（待規劃）
 
 ## 資料夾結構
@@ -48,7 +49,7 @@ ai-recommendation/
 │  ├─ landing/               # landing page 各區塊（Hero/Features/HowItWorks/...）
 │  ├─ settings/              # API 金鑰設定（ApiKeyProvider/Dialog/Button）
 │  └─ site/                  # Logo、SiteHeader、SiteFooter
-├─ lib/                      # gemini.ts, recommend.ts, prompt.ts, schema.ts, parse-files.ts, types.ts, api-key*.ts
+├─ lib/                      # gemini.ts, recommend.ts, prompt.ts, schema.ts, parse-files.ts, parse-client.ts, limits.ts, types.ts, api-key*.ts
 ├─ data/                     # programs.ts（簡章審查方式）、historical-criteria.ts（非官方個案統計）
 ├─ public/                   # 靜態資源
 ├─ AGENTS.md, handoff.md     # 藍圖與交接檔
