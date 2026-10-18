@@ -17,7 +17,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 上傳自傳、個人資料表、學習／研究計劃書、在學成績單與有利審查資料，依 116 學年度各校資工相關系所簡章的審查方式與網路蒐集的歷年推甄經驗，由 AI 估算各項資料的權重、錄取機率區間，並給出逐項改善建議。涵蓋台大、清大、陽明交大、成大、中央等校資工相關系所。
 
 - 技術棧：Next.js（App Router）＋ TypeScript ＋ Tailwind
-- AI 服務：Google Gemini（OpenAI 相容端點），採 BYOK（使用者自備金鑰，存瀏覽器 localStorage）
+- AI 服務：OpenCode Go（OpenAI 相容端點，固定模型 `deepseek-v4.1-flash`），採 BYOK（使用者自備金鑰，存瀏覽器 localStorage）
 
 ## 關鍵時程
 
@@ -27,11 +27,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 目標與路線圖
 
 <!-- 用 checklist 追蹤，收工技能會更新這裡 -->
-- [x] 階段一：BYOK 模式（自備 Gemini 金鑰，伺服器不持有金鑰）
+- [x] 階段一：BYOK 模式（自備金鑰，伺服器不持有金鑰）
 - [x] 階段二：AI 推甄審查模擬器（審查 API、工具頁與 landing page）
 - [x] 階段三：AI 服務改為 Google Gemini（OpenAI 相容端點）
 - [x] 修正：正式站大檔上傳回 HTTP 413（前端改為瀏覽器端解析、只上傳文字）
-- [ ] 階段四：（待規劃）
+- [x] 階段四：AI 服務改為 OpenCode Go（模型 `deepseek-v4.1-flash`）
+- [ ] 階段五：（待規劃）
 
 ## 資料夾結構
 
@@ -49,7 +50,7 @@ ai-recommendation/
 │  ├─ landing/               # landing page 各區塊（Hero/Features/HowItWorks/...）
 │  ├─ settings/              # API 金鑰設定（ApiKeyProvider/Dialog/Button）
 │  └─ site/                  # Logo、SiteHeader、SiteFooter
-├─ lib/                      # gemini.ts, recommend.ts, prompt.ts, schema.ts, parse-files.ts, parse-client.ts, limits.ts, types.ts, api-key*.ts
+├─ lib/                      # opencode-go.ts, recommend.ts, prompt.ts, schema.ts, parse-files.ts, parse-client.ts, limits.ts, session-id.ts, types.ts, api-key*.ts
 ├─ data/                     # programs.ts（簡章審查方式）、historical-criteria.ts（非官方個案統計）
 ├─ public/                   # 靜態資源
 ├─ AGENTS.md, handoff.md     # 藍圖與交接檔

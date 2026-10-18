@@ -35,7 +35,7 @@ export default function HowItWorks() {
 
         <p className="mt-12 rounded-xl border border-border bg-surface p-5 text-sm leading-7 text-muted">
           <span className="font-semibold text-foreground">第一次使用？</span>
-          本服務採自備金鑰（BYOK）：請先在右上角的「API 金鑰」貼上你自己的 Google Gemini 金鑰。
+          本服務採自備金鑰（BYOK）：請先在右上角的「API 金鑰」貼上你自己的 OpenCode Go 金鑰。
           它只會存在你瀏覽器的 localStorage，審查用的是你自己的額度。
         </p>
       </div>

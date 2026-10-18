@@ -101,7 +101,7 @@ export default function Hero({ programCount, schoolCount }: { programCount: numb
             className="rise mt-5 max-w-xl text-sm leading-relaxed text-muted"
             style={{ "--d": "0.28s" } as React.CSSProperties}
           >
-            自備金鑰（BYOK）：使用你自己的 Google Gemini API 金鑰，金鑰只存在你的瀏覽器。
+            自備金鑰（BYOK）：使用你自己的 OpenCode Go API 金鑰，金鑰只存在你的瀏覽器。
           </p>
 
           <dl

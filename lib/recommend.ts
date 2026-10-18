@@ -1,5 +1,5 @@
 import { getProgram } from "@/data/programs";
-import { chatStream, MODEL, type ChatMessage } from "./gemini";
+import { chatStream, MODEL, type ChatMessage } from "./opencode-go";
 import { buildMessages, type DocInput } from "./prompt";
 import { ModelOutputSchema, extractJson, type ModelOutput } from "./schema";
 import {
@@ -125,7 +125,12 @@ function postProcess(out: ModelOutput, input: RecommendationInput): Recommendati
 
 export async function runRecommendation(
   input: RecommendationInput,
-  opts: { apiKey: string; signal?: AbortSignal; onProgress?: (message: string, chars: number) => void },
+  opts: {
+    apiKey: string;
+    sessionId?: string;
+    signal?: AbortSignal;
+    onProgress?: (message: string, chars: number) => void;
+  },
 ): Promise<RecommendationResult> {
   const messages: ChatMessage[] = buildMessages(input.programIds, input.docs, input.notes);
   const startedAt = Date.now();
@@ -134,6 +139,7 @@ export async function runRecommendation(
   const call = (msgs: ChatMessage[]) =>
     chatStream(msgs, {
       apiKey: opts.apiKey,
+      sessionId: opts.sessionId,
       signal: opts.signal,
       onStats: (s) => {
         const now = Date.now();

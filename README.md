@@ -13,22 +13,23 @@ npm run dev        # http://localhost:3000
 
 ## 自備金鑰（BYOK）
 
-本服務**不持有、也不需要**任何 AI 金鑰，不讀取環境變數中的金鑰。AI 服務為 Google Gemini（OpenAI 相容端點）。
+本服務**不持有、也不需要**任何 AI 金鑰，不讀取環境變數中的金鑰。AI 服務為 OpenCode Go（OpenAI 相容端點，固定模型 `deepseek-v4.1-flash`）。
 
-- 使用者在網站右上角「API 金鑰」貼上自己的 Google AI Studio（Gemini）金鑰，存在**瀏覽器的 localStorage**。
-- 每次呼叫 API 時以 `Authorization: Bearer <key>` 帶上；伺服器只在該次請求中轉發給 Google Gemini，不儲存、不記錄。
-- 沒帶金鑰的請求一律回 `401`（`code: "missing_api_key"`）；Gemini 拒絕金鑰時回 `401`（`code: "invalid_api_key"`）。
+- 使用者在網站右上角「API 金鑰」貼上自己的 OpenCode Go 金鑰（`oc_sk_…`），存在**瀏覽器的 localStorage**。
+- 每次呼叫 API 時以 `Authorization: Bearer <key>` 帶上；伺服器只在該次請求中轉發給 OpenCode Go，不儲存、不記錄。
+- 另需帶上 `x-opencode-session`（穩定的 session id，前端會自動產生）：OpenCode Go 以此做路由與 prompt 快取，缺少會被回 400。
+- 沒帶金鑰的請求一律回 `401`（`code: "missing_api_key"`）；OpenCode Go 拒絕金鑰時回 `401`（`code: "invalid_api_key"`）。
 
 選用的環境變數（`.env.local`，皆非機密）：
 
 | 變數 | 說明 |
 | --- | --- |
-| `GEMINI_MODEL` | 預設 `gemini-flash-latest` |
-| `GEMINI_BASE_URL` | 預設 `https://generativelanguage.googleapis.com/v1beta/openai` |
+| `OPENCODE_GO_MODEL` | 預設 `deepseek-v4.1-flash` |
+| `OPENCODE_GO_BASE_URL` | 預設 `https://opencode.ai/inference/go/openai/v1` |
 
 ## API：`POST /api/recommendation`
 
-標頭：`Authorization: Bearer <你的 Gemini 金鑰>`（必填）
+標頭：`Authorization: Bearer <你的 OpenCode Go 金鑰>`（必填）、`x-opencode-session`（選填，建議帶）
 
 `multipart/form-data`：
 
